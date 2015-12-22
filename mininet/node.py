@@ -636,6 +636,41 @@ class Host( Node ):
     "A host is simply a Node"
     pass
 
+# Reference from: https://github.com/opennetworkinglab/onos/tree/master/tools/tutorials/sdnip
+class Router( Host ):
+
+    # Default use BGP
+    # TODO: Add more routing protocols ospf, isis, babel, ospf6, rip, ripng
+
+    def __init__( self, name, bgpdConfFile, zebraConfFile, *args, **kwargs ):
+        Host.__init__(self, name, *args, **kwargs)
+        self.bgpdConfFile = bgpdConfFile
+        self.zebraConfFile = zebraConfFile
+        #self.intfDict = intfDict
+        self.quagga_run_dir = '/var/run'
+
+    def config(self, **kwargs):
+        Host.config(self, **kwargs)
+        self.cmd('sysctl net.ipv4.ip_forward=1')
+
+        #for intf, attrs in self.intfDict.items():
+        #    self.cmd('ip addr flush dev %s' % intf)
+        #    if 'mac' in attrs:
+        #        self.cmd('ip link set %s down' % intf)
+        #        self.cmd('ip link set %s address %s' % (intf, attrs['mac']))
+        #        self.cmd('ip link set %s up ' % intf)
+        #    for addr in attrs['ipAddrs']:
+        #        self.cmd('ip addr add %s dev %s' % (addr, intf))
+
+        self.cmd('zebra -d -f %s -z %s/zebra_%s.api -i %s/zebra_%s.pid' % (self.zebraConfFile, self.quagga_run_dir, self.name, self.quagga_run_dir, self.name))
+        self.cmd('bgpd -d -f %s -z %s/zebra_%s.api -i %s/bgpd_%s.pid' % (self.bgpdConfFile, self.quagga_run_dir, self.name, self.quagga_run_dir, self.name))
+
+    def terminate(self):
+        self.cmd("ps ax | egrep 'bgpd_%s.pid|zebra_%s.pid' | awk '{print $1}' | xargs kill" % (self.name, self.name))
+        Host.terminate(self)
+
+
+
 class CPULimitedHost( Host ):
 
     "CPU limited host"

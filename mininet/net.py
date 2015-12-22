@@ -99,7 +99,7 @@ from math import ceil
 from mininet.cli import CLI
 from mininet.log import info, error, debug, output, warn
 from mininet.node import ( Node, Host, OVSKernelSwitch, DefaultController,
-                           Controller, AP, Station )
+                           Controller, AP, Station, Router )
 from mininet.nodelib import NAT
 from mininet.link import Link, Intf
 from mininet.util import ( quietRun, fixLimits, numCores, ensureRoot,
@@ -317,6 +317,12 @@ class Mininet( object ):
                 if host.inNamespace:
                     host.setDefaultRoute( 'via %s' % natIP )
         return nat
+
+    # Reference from: https://github.com/opennetworkinglab/onos/tree/master/tools/tutorials/sdnip
+    def addRouter( self, cls=None, name='router0', **params):
+        # Default use BGP
+        # TODO: Add more routing protocols ospf, isis, babel, ospf6, rip, ripng
+        router = self.addHost( name, cls=Router, bgpdConfFile='/etc/quagga/bgpd.conf', zebraConfFile='/etc/quagga/zebra.conf', **params )
 
     # BL: We now have four ways to look up nodes
     # This may (should?) be cleaned up in the future.
